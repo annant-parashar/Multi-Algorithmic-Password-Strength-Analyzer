@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Algorithmic Password Strength Analyzer</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Password Strength Analyzer</h1>
+        
+        <div class="password-input">
+            <input type="text" id="passwordInput" placeholder="Enter password to analyze">
+        </div>
+
+        <div class="button-group">
+            <button id="analyzeBtn">Analyze Password</button>
+            <button id="generateBtn">Generate Strong Password</button>
+        </div>
+
+        <div class="result-container" id="resultContainer">
+            <div class="score-container">
+                <div class="overall-score">
+                    <h3>Overall Strength</h3>
+                    <div class="score-meter">
+                        <div id="strengthMeter" class="meter-fill"></div>
+                    </div>
+                    <span id="strengthText">No Password</span>
+                </div>
+            </div>
+
+            <div class="detailed-scores">
+                <div class="score-item">
+                    <span>Length Score</span>
+                    <div class="score-bar">
+                        <div id="lengthScore" class="score-fill"></div>
+                    </div>
+                </div>
+                <div class="score-item">
+                    <span>Complexity Score</span>
+                    <div class="score-bar">
+                        <div id="complexityScore" class="score-fill"></div>
+                    </div>
+                </div>
+                <div class="score-item">
+                    <span>Dictionary Safety</span>
+                    <div class="score-bar">
+                        <div id="dictionaryScore" class="score-fill"></div>
+                    </div>
+                </div>
+                <div class="score-item">
+                    <span>Brute Force Resistance</span>
+                    <div class="score-bar">
+                        <div id="bruteforceScore" class="score-fill"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="suggestions">
+                <h3>Suggestions</h3>
+                <ul id="suggestionsList"></ul>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
