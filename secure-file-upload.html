@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Secure File Locker</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f2f5;
+            color: #1a1a1a;
+            padding: 2rem;
+            max-width: 600px;
+            margin: auto;
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 2rem;
+        }
+        .section {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        input[type="file"], input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 1rem;
+            border: 2px solid #e1e1e1;
+            border-radius: 8px;
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+        input[type="password"]:focus, input[type="file"]:focus {
+            border-color: #3498db;
+            outline: none;
+        }
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            width: 100%;
+        }
+        button:hover {
+            background: #2980b9;
+        }
+        #status {
+            margin-top: 1rem;
+            font-weight: 600;
+            color: #e74c3c; /* red by default */
+        }
+        #status.success {
+            color: #2ecc71; /* green if success */
+        }
+        #fileList {
+            margin-top: 1rem;
+        }
+        #fileList li {
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+        }
+    </style>
+</head>
+<body>
+    <h1>Secure File Locker</h1>
+
+    <div class="section" id="uploadSection">
+        <label for="fileInput">Select files to lock:</label>
+        <input type="file" id="fileInput" multiple />
+        <button id="uploadBtn">Upload & Lock Files</button>
+        <div id="uploadStatus"></div>
+    </div>
+
+    <div class="section" id="unlockSection">
+        <label for="passwordInput">Enter Password to Unlock Files:</label>
+        <input type="password" id="passwordInput" placeholder="Enter your password" />
+        <button id="unlockBtn">Unlock Files</button>
+        <div id="unlockStatus"></div>
+        <ul id="fileList"></ul>
+    </div>
+
+    <script>
+        const uploadBtn = document.getElementById('uploadBtn');
+        const fileInput = document.getElementById('fileInput');
+        const uploadStatus = document.getElementById('uploadStatus');
+        const unlockBtn = document.getElementById('unlockBtn');
+        const passwordInput = document.getElementById('passwordInput');
+        const unlockStatus = document.getElementById('unlockStatus');
+        const fileList = document.getElementById('fileList');
+
+        // We store locked files metadata in localStorage to simulate server-side locking
+        // (In real app, this should be securely handled on server)
+
+        let lockedFiles = JSON.parse(localStorage.getItem('lockedFiles')) || [];
+
+        function displayLockedFiles() {
+            fileList.innerHTML = '';
+            if (lockedFiles.length === 0) {
+                fileList.innerHTML = '<li>No locked files.</li>';
+                return;
+            }
+            lockedFiles.forEach((file, index) => {
+                const li = document.createElement('li');
+                li.textContent = file.name;
+                fileList.appendChild(li);
+            });
+        }
+
+        displayLockedFiles();
+
+        // Upload files and "lock" them by saving metadata + content base64 to localStorage
+        uploadBtn.addEventListener('click', () => {
+            const files = fileInput.files;
+            if (!files.length) {
+                uploadStatus.textContent = 'Please select files to upload.';
+                uploadStatus.className = '';
+                return;
+            }
+
+            const password = prompt('Please re-enter your password to lock the files:');
+            if (password !== 'rootuser123#') {
+                alert('Incorrect password! Files will NOT be saved.');
+                uploadStatus.textContent = 'Upload failed: incorrect password.';
+                uploadStatus.className = '';
+                return;
+            }
+
+            uploadStatus.textContent = 'Locking files... Please wait.';
+            uploadStatus.className = '';
+
+            const readFilesPromises = [];
+
+            for (let file of files) {
+                const reader = new FileReader();
+                const promise = new Promise((resolve, reject) => {
+                    reader.onload = () => {
+                        resolve({
+                            name: file.name,
+                            type: file.type,
+                            content: reader.result // base64 data URL
+                        });
+                    };
+                    reader.onerror = () => {
+                        reject('Error reading file: ' + file.name);
+                    };
+                });
+                reader.readAsDataURL(file);
+                readFilesPromises.push(promise);
+            }
+
+            Promise.all(readFilesPromises)
+                .then(results => {
+                    lockedFiles = lockedFiles.concat(results);
+                    localStorage.setItem('lockedFiles', JSON.stringify(lockedFiles));
+                    uploadStatus.textContent = 'Files locked successfully!';
+                    uploadStatus.className = 'success';
+                    fileInput.value = '';
+                    displayLockedFiles();
+                })
+                .catch(err => {
+                    uploadStatus.textContent = err;
+                    uploadStatus.className = '';
+                });
+        });
+
+        // Unlock files only if password matches
+        unlockBtn.addEventListener('click', () => {
+            const inputPass = passwordInput.value;
+            if (inputPass !== 'rootuser123#') {
+                unlockStatus.textContent = 'Wrong password! Files are deleted permanently.';
+                unlockStatus.className = '';
+                // Delete files immediately
+                lockedFiles = [];
+                localStorage.removeItem('lockedFiles');
+                displayLockedFiles();
+                return;
+            }
+
+            if (lockedFiles.length === 0) {
+                unlockStatus.textContent = 'No files to unlock.';
+                unlockStatus.className = '';
+                return;
+            }
+
+            unlockStatus.textContent = 'Password correct! Preparing files for download...';
+            unlockStatus.className = 'success';
+
+            // Create download links for each file
+            fileList.innerHTML = '';
+            lockedFiles.forEach((file, idx) => {
+                const li = document.createElement('li');
+                const a = document.createElement('a');
+                a.href = file.content;
+                a.download = file.name;
+                a.textContent = `Download ${file.name}`;
+                a.style.color = '#3498db';
+                li.appendChild(a);
+                fileList.appendChild(li);
+            });
+
+            // After unlocking once, clear the locked files for security
+            lockedFiles = [];
+            localStorage.removeItem('lockedFiles');
+        });
+    </script>
+</body>
+</html>
