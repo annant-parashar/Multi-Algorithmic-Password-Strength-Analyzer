@@ -36,10 +36,10 @@ This project includes a hidden **Secure Vault** feature:
 
 | Layer         | Technology              |
 |---------------|--------------------------|
-| Backend       | Java                     |
+| Backend       | Python                   |
 | Frontend      | HTML, CSS, JavaScript    |
 | Attack Models | Brute-force, Dictionary, Rule-based, Pattern Matching |
-| Vault System  | Local File Handling (Java), Hidden UI Logic (JavaScript) |
+| Vault System  | Hidden UI Logic (JavaScript)                          |
 
 ---
 
